@@ -15,6 +15,55 @@ def opponent(color):
     return WHITE
 
 
+def print_board(board): # Распечатать доску в текстовом виде (см. скриншот)
+    print('     +----+----+----+----+----+----+----+----+')
+    for row in range(7, -1, -1):
+        print(' ', row, end='  ')
+        for col in range(8):
+            print('|', board.cell(row, col), end=' ')
+        print('|')
+        print('     +----+----+----+----+----+----+----+----+')
+    print(end='        ')
+    for col in range(8):
+        print(col, end='    ')
+    print()
+ 
+
+def main():
+    # Создаём шахматную доску
+    board = Board()
+
+    # Цикл ввода команд игроков
+    while True:
+
+        # Выводим положение фигур на доске
+        print_board(board)
+
+        # Подсказка по командам
+        print('Команды:')
+        print('    exit                               -- выход')
+        print('    move <row> <col> <row1> <col1>     -- ход из клетки (row, col)')
+        print('                                          в клетку (row1, col1)')
+
+        # Выводим приглашение игроку нужного цвета
+        if board.current_player_color() == WHITE:
+            print('Ход белых:')
+        else:
+            print('Ход черных:')
+        command = input()
+
+        if command == 'exit':
+            break
+
+        move_type, row, col, row1, col1 = command.split()
+        row, col, row1, col1 = int(row), int(col), int(row1), int(col1)
+
+        if board.move_piece(row, col, row1, col1):
+            print('Ход успешен')
+        else:
+            print('Координаты некорректы! Попробуйте другой ход!')
+
+
 class Chessman:
     """Класс, являющийся базой для всех шахматных фигур"""
     def __init__(self, row, col, color):
@@ -81,6 +130,15 @@ class Board:
         self.color = opponent(self.color)
         return True
 
+    def is_under_attack(row, col, color):
+        """Проверка, находится ли данная клетка под атакой других фигур данного цвета"""
+        for i in range(8):
+            for j in range(8):
+                if self.field[row][col] != None and color == self.field[row][col].get_color():
+                    if self.field[row][col].can_move(row, col):
+                        return True
+        return False
+
 
 class Pawn(Chessman):
     """Фигура пешка"""
@@ -135,6 +193,7 @@ class Rook(Chessman):
         return True
 
 
+
 class Queen(Chessman):
     """Фигура ферзь"""
 
@@ -186,54 +245,6 @@ class Knight(Chessman):
         return 'N'
 
 
-def print_board(board): # Распечатать доску в текстовом виде (см. скриншот)
-    print('     +----+----+----+----+----+----+----+----+')
-    for row in range(7, -1, -1):
-        print(' ', row, end='  ')
-        for col in range(8):
-            print('|', board.cell(row, col), end=' ')
-        print('|')
-        print('     +----+----+----+----+----+----+----+----+')
-    print(end='        ')
-    for col in range(8):
-        print(col, end='    ')
-    print()
- 
-
-def main():
-    # Создаём шахматную доску
-    board = Board()
-
-    # Цикл ввода команд игроков
-    while True:
-
-        # Выводим положение фигур на доске
-        print_board(board)
-
-        # Подсказка по командам
-        print('Команды:')
-        print('    exit                               -- выход')
-        print('    move <row> <col> <row1> <col1>     -- ход из клетки (row, col)')
-        print('                                          в клетку (row1, col1)')
-
-        # Выводим приглашение игроку нужного цвета
-        if board.current_player_color() == WHITE:
-            print('Ход белых:')
-        else:
-            print('Ход черных:')
-        command = input()
-
-        if command == 'exit':
-            break
-
-        move_type, row, col, row1, col1 = command.split()
-        row, col, row1, col1 = int(row), int(col), int(row1), int(col1)
-
-        if board.move_piece(row, col, row1, col1):
-            print('Ход успешен')
-        else:
-            print('Координаты некорректы! Попробуйте другой ход!')
-
-
 if __name__ == "__main__":
     main()
+
