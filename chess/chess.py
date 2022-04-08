@@ -92,7 +92,7 @@ class Board:
         for row in range(8):
             self.field.append([None] * 8)
         # Пешка белого цвета в клетке E2.
-        # self.field[1][4] = Pawn(1, 4, WHITE)  
+        self.field[1][4] = Pawn(1, 4, WHITE)  
 
     def current_player_color(self):
         return self.color
@@ -130,13 +130,14 @@ class Board:
         self.color = opponent(self.color)
         return True
 
-    def is_under_attack(row, col, color):
+    def is_under_attack(self, row, col, color):
         """Проверка, находится ли данная клетка под атакой других фигур данного цвета"""
         for i in range(8):
             for j in range(8):
-                if self.field[row][col] != None and color == self.field[row][col].get_color():
-                    if self.field[row][col].can_move(row, col):
-                        return True
+                if self.field[i][j] is not None:
+                    if color == self.field[i][j].get_color():
+                        if self.field[i][j].can_move(row, col):
+                            return True
         return False
 
 
@@ -191,7 +192,6 @@ class Rook(Chessman):
             return False
  
         return True
-
 
 
 class Queen(Chessman):
