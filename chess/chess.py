@@ -1,7 +1,18 @@
+WHITE = 1
+BLACK = 2
+
+# Проверка на правильность координат
 def correct_coords(row, col):
     """Функция проверяет, что координаты (row, col) лежат
     внутри доски"""
     return 0 <= row < 8 and 0 <= col < 8
+
+
+# Удобная функция для вычисления цвета противника
+def opponent(color):
+    if color == WHITE:
+        return BLACK
+    return WHITE
 
 
 class Chessman:
@@ -9,7 +20,7 @@ class Chessman:
     def __init__(self, row, col, color):
         self.set_position(row, col)
         self.color = color
-        self.name = self.char(self)
+        self.name = self.char()
 
     def char(self):
         """Функция, возвращающая имя фигуры"""
@@ -32,7 +43,7 @@ class Board:
         for row in range(8):
             self.field.append([None] * 8)
         # Пешка белого цвета в клетке E2.
-        self.field[1][4] = Pawn(1, 4, WHITE)  
+        # self.field[1][4] = Pawn(1, 4, WHITE)  
 
     def current_player_color(self):
         return self.color
@@ -173,3 +184,56 @@ class Knight(Chessman):
     def char(self):
         """Функция, возвращающая имя фигуры"""
         return 'N'
+
+
+def print_board(board): # Распечатать доску в текстовом виде (см. скриншот)
+    print('     +----+----+----+----+----+----+----+----+')
+    for row in range(7, -1, -1):
+        print(' ', row, end='  ')
+        for col in range(8):
+            print('|', board.cell(row, col), end=' ')
+        print('|')
+        print('     +----+----+----+----+----+----+----+----+')
+    print(end='        ')
+    for col in range(8):
+        print(col, end='    ')
+    print()
+ 
+
+def main():
+    # Создаём шахматную доску
+    board = Board()
+
+    # Цикл ввода команд игроков
+    while True:
+
+        # Выводим положение фигур на доске
+        print_board(board)
+
+        # Подсказка по командам
+        print('Команды:')
+        print('    exit                               -- выход')
+        print('    move <row> <col> <row1> <col1>     -- ход из клетки (row, col)')
+        print('                                          в клетку (row1, col1)')
+
+        # Выводим приглашение игроку нужного цвета
+        if board.current_player_color() == WHITE:
+            print('Ход белых:')
+        else:
+            print('Ход черных:')
+        command = input()
+
+        if command == 'exit':
+            break
+
+        move_type, row, col, row1, col1 = command.split()
+        row, col, row1, col1 = int(row), int(col), int(row1), int(col1)
+
+        if board.move_piece(row, col, row1, col1):
+            print('Ход успешен')
+        else:
+            print('Координаты некорректы! Попробуйте другой ход!')
+
+
+if __name__ == "__main__":
+    main()
