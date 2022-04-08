@@ -5,19 +5,22 @@ def correct_coords(row, col):
 
 
 class Chessman:
-    """класс, являющийся базой для всех шахматных фигур"""
+    """Класс, являющийся базой для всех шахматных фигур"""
     def __init__(self, row, col, color):
         self.set_position(row, col)
         self.color = color
         self.name = self.char(self)
 
     def char(self):
+        """Функция, возвращающая имя фигуры"""
         return None
 
     def get_color(self):
+        """Функция, возвращающая цвет фигуры"""
         return self.color
 
     def set_position(self, row, col):
+        """Функция, устанавливающая фигуру на заданную позицию"""
         self.row = row
         self.col = col
 
@@ -69,15 +72,17 @@ class Board:
 
 
 class Pawn(Chessman):
-    """пешка"""
+    """Фигура пешка"""
 
     def char(self):
+        """Функция, возвращающая имя фигуры"""
         return 'P'
 
     def can_move(self, row, col):
+        """Функция, проверяющая, может ли данная фигура походить на данную клетку"""
 
         # Пешка может ходить только по вертикали
-        # Взятие на ходу не реализовано
+        # Взятие на ходу не реализовано !!!
         if self.col != col:
             return False
 
@@ -102,12 +107,15 @@ class Pawn(Chessman):
 
 
 class Rook(Chessman):
-    """ладья"""
+    """Фигура ладья"""
 
-    def get_name(self):
+    def char(self):
+        """Функция, возвращающая имя фигуры"""
         return 'R'
 
     def can_move(self, row, col):
+        """Функция, проверяющая, может ли данная фигура походить на данную клетку"""
+
         # Невозможно сделать ход в клетку, которая не лежит в том же ряду
         # или столбце клеток.
         if self.row != row and self.col != col:
@@ -117,42 +125,51 @@ class Rook(Chessman):
 
 
 class Queen(Chessman):
-    """ферзь"""
+    """Фигура ферзь"""
 
     def can_move(self, row, col):
-        if (0 <= row < 8 and 0 <= col < 8 and
-                (abs(self.row - row) == abs(self.col - col)
-                 or (self.row == row and self.col != col) or
-                 (self.row != row and self.col == col))):
+        """Функция, проверяющая, может ли данная фигура походить на данную клетку"""
+
+        # Ферзь может ходить либо по диогонали, либо по вертикали
+        # либо по горизонтали. 
+        if ((abs(self.row - row) == abs(self.col - col)
+                 or self.row == row or self.col == col)):
             return True
         return False
     
     def char(self):
+        """Функция, возвращающая имя фигуры"""
         return 'Q'
 
 
 class Bishop(Chessman):
-    """слон"""
+    """Фигура слон"""
         
     def can_move(self, row, col):
-        if (0 <= row < 8 and 0 <= col < 8 and
-                abs(self.row - row) == abs(self.col - col)):
+        """Функция, проверяющая, может ли данная фигура походить на данную клетку"""
+
+        # Слон может ходить только по диагоналям
+        if abs(self.row - row) == abs(self.col - col):
             return True
         return False
     
     def char(self):
+        """Функция, возвращающая имя фигуры"""
         return 'B'
 
 
 class Knight(Chessman):
-    """конь"""
+    """Фигура конь"""
         
     def can_move(self, row, col):
-        if (0 <= row < 8 and 0 <= col < 8 and
-                ((abs(self.row - row) == 1 and abs(self.col - col) == 2) or
-                 (abs(self.row - row) == 2 and abs(self.col - col) == 1))):
+        """Функция, проверяющая, может ли данная фигура походить на данную клетку"""
+
+        # Конь ходит буквой 'Г', то есть в любую сторону на 2 клетки и одну в бок
+        if ((abs(self.row - row) == 1 and abs(self.col - col) == 2) or
+                 (abs(self.row - row) == 2 and abs(self.col - col) == 1)):
             return True
         return False
     
     def char(self):
+        """Функция, возвращающая имя фигуры"""
         return 'N'
