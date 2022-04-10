@@ -310,10 +310,25 @@ class Knight(Chessman):
         """Функция, возвращающая имя фигуры"""
         return 'N'
     
-    def can_move(self, row, col):
+    def can_move(self, row, col, field):
         """Функция, проверяющая, может ли данная фигура походить на данную клетку"""
-        return True
 
+        if not self.is_way_clear(row, col, field):
+            return False
+        if abs(row - self.row) == 2 and abs(self.col - col) == 1:
+            return True  # можно ходить только буквой Г
+        if abs(row - self.row) == 1 and abs(self.col - col) == 2:
+            return True  # нельзя ходить на ту же клетку
+        return False
+
+    def is_way_clear(self, row, col, field):
+        """Проверка, есть ли другие фигуры на пути.
+        Фигура на назначенной клетки -- исключение, если она другого цвета"""
+
+        if field[row][col] is not None:
+            if field[row][col].get_color() == self.get_color():
+                return False
+        return True
 
 class King(Chessman):
     """Фигура король"""
