@@ -264,8 +264,43 @@ class Queen(Chessman):
         """Функция, возвращающая имя фигуры"""
         return 'Q'
     
-    def can_move(self, row, col):
+    def can_move(self, row, col, field):
         """Функция, проверяющая, может ли данная фигура походить на данную клетку"""
+
+        if row != self.row and self.col != col and abs(row - self.row) != abs(self.col - col):
+            return False  # можно ходить только по горизонтали, или только по вертикали, или только по диагонали
+        if row == self.row and self.col == col:
+            return False  # нельзя ходить на ту же клетку
+        if not self.is_way_clear(row, col, field):
+            return False
+        return True
+
+    def is_way_clear(self, row, col, field):
+        """Проверка, есть ли другие фигуры на пути.
+        Фигура на назначенной клетки -- исключение, если она другого цвета"""
+
+        if row == self.row:
+            d = int((self.col - col) / abs(self.col - col))
+            for i in range(1, abs(self.col - col)):
+                if field[row][self.col - i * d] is not None:
+                    return False
+
+        if col == self.col:
+            d = int((self.row - row) / abs(self.row - row))
+            for i in range(1, abs(self.row - row)):
+                if field[self.row - i * d][col] is not None:
+                    return False
+
+        if abs(row - self.row) == abs(self.col - col):
+            d_row = int((self.row - row) / abs(self.row - row))
+            d_col = int((self.col - col) / abs(self.col - col))
+            for i in range(1, abs(self.row - row)):
+                if field[self.row - i * d_row][self.col - i * d_col] is not None:
+                    return False
+
+        if field[row][col] is not None:
+            if field[row][col].get_color() == self.get_color():
+                return False
         return True
 
 
