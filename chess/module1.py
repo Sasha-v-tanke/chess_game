@@ -97,9 +97,9 @@ class Board:
             self.field.append([None] * 8)
 
         # расставляем все фигуры
-        #for j in range(8): # все пешки
-        #    self.field[1][j] = Pawn(1, j, WHITE)
-        #    self.field[6][j] = Pawn(6, j, BLACK)
+        for j in range(8): # все пешки
+            self.field[1][j] = Pawn(1, j, WHITE)
+            self.field[6][j] = Pawn(6, j, BLACK)
         for i in range(2): # остальные фигуры
             # при i = 0 сначала выставляются фигуры на левой половине доски,
             # при i = 1 на правой
@@ -178,10 +178,10 @@ class Board:
             if flag[1]:
                 # пешка ловит на проходе,
                 # поэтому следует убрать пойманную пешку с доски
-                self.field[self.is_can_be_taken_on_pass[2]][self.is_can_be_taken_on_pass[3]]
+                self.field[self.is_can_be_taken_on_pass[2]][self.is_can_be_taken_on_pass[3]] = None
                 # иначе пешка просто ходит или ест другую фигуру,
                 # никаких дополнительных действий не нужно
-
+            return True
         if not piece.can_move(row1, col1, self.field):
             return False  # выбранная фигура не может походить в выбранную клетку
 
@@ -201,8 +201,9 @@ class Board:
                 if piece is not None:
                     if color == piece.get_color():
                         if isinstance(piece, Pawn):  # у пешки немного отличающаяся система хода, проверяем её отдельно от других фигур
-                            if piece.can_move(row, col, self.is_can_be_taken_on_pass, self.field):
+                            if piece.can_eat(row, col, self.is_can_be_taken_on_pass, self.field):
                                 return True
+                            continue
                         if piece.can_move(row, col, self.field):
                             return True
         return False
@@ -215,9 +216,51 @@ class Pawn(Chessman):
         """Функция, возвращающая имя фигуры"""
         return 'P'
 
-    def can_move(self, row, col, is_can_be_taken_on_pass, field):
-        """Функция, проверяющая, может ли данная фигура походить на данную клетку"""
-        return True
+    def can_move(self, row, col, flag, field):
+        """Функция, проверяющая, может ли данная фигура походить на данную клетку.
+        Возвращается (False, False) если ход невозможен
+        (True, False) -- при обычном ходе вперёд или при взятии другой фигуры
+        (True, True) -- при взятии на проходе"""
+
+        # Пешка может сделать из начального положения ход на 2 клетки
+        # вперёд, поэтому поместим индекс начального ряда в start_row.
+        if self.color == WHITE:
+            direction = 1
+            start_row = 1
+        else:
+            direction = -1
+            start_row = 6
+
+        if col == self.col:  # обычный или длинный ход
+            # ход на 1 клетку
+            if self.row + direction == row:
+                if field[row][col] is None:
+                    return True, False
+ 
+            # ход на 2 клетки из начального положения
+            if self.row == start_row and self.row + 2 * direction == row:
+                if (field[row][col], field[int((self.row + row) / 2)][col]) == (None, None):
+                    return True, False
+        if row - self.row == direction and abs(col - self.col) == 1:
+            if field[row][col] is not None:
+                return self.get_color() != field[row][col].get_color(), False
+            if flag is not None:
+                if (flag[0], flag[1]) == (row, col):
+                    return True, True
+        return False, False
+
+    def can_eat(self, row, col, flag, field):
+        """Функция, проверяющая, бьёт ли эта пешка эту клетку"""
+
+        if self.color == WHITE:
+            direction = 1
+        else:
+            direction = -1
+
+        if row - self.row == direction and abs(col - self.col) == 1:
+            return True
+
+        return False
 
 
 class Rook(Chessman):
@@ -368,6 +411,7 @@ class Knight(Chessman):
                 return False
         return True
 
+
 class King(Chessman):
     """Фигура король"""
 
@@ -382,6 +426,7 @@ class King(Chessman):
             return False  # нельзя ходить на ту же клетку
         if abs(self.row - row) + abs(self.col - col) <= 2 and self.is_way_clear(row, col, field):
             return True
+
         return False
 
     def is_way_clear(self, row, col, field):
