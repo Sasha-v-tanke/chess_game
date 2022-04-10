@@ -82,31 +82,192 @@ class Chessman:
 
 
 class Board:
-    pass
+    """Поле с фигурами"""
 
+    def __init__(self):
+        self.color = WHITE # цвет фигур, игрока который сейчас ходит
+
+        self.is_can_be_taken_on_pass = None # координаты пешки, которую могут 
+                                            # взять на проходе после данного хода;
+                                            # записывается скачала координаты клетки,
+                                            # через которую она ходила, потом координаты самой пешки
+        # создаём поле с фигурами
+        self.field = []
+        for row in range(8):
+            self.field.append([None] * 8)
+
+        # расставляем все фигуры
+        for j in range(8): # все пешки
+            self.field[1][j] = Pawn(1, j, WHITE)
+            self.field[6][j] = Pawn(6, j, BLACK)
+        for i in range(2): # остальные фигуры
+            # при i = 0 сначала выставляются фигуры на левой половине доски,
+            # при i = 1 на правой
+            self.field[0][7 * i] = Rook(0, 7 * i, WHITE) 
+            self.field[7][7 * i] = Rook(7, 7 * i, BLACK)
+            self.field[0][1 + 5 * i] = Knight(0, 1 + 5 * i, WHITE) 
+            self.field[7][1 + 5 * i] = Knight(7, 1 + 5 * i, BLACK)
+            self.field[0][2 + 3 * i] = Bishop(0, 2 + 3 * i, WHITE) 
+            self.field[7][2 + 3 * i] = Bishop(7, 2 + 3 * i, BLACK)
+        self.field[7][3] = Queen(7, 3, BLACK)
+        self.field[0][3] = Queen(0, 3, WHITE)
+        self.field[7][4] = King(7, 4, BLACK)
+        self.field[0][4] = King(0, 4, WHITE)
+
+    def current_player_color(self):
+        return self.color
+
+    def cell(self, row, col):
+        """Возвращает строку из двух символов. Если в клетке (row, col)
+        находится фигура, символы цвета и фигуры. Если клетка пуста,
+        то два пробела."""
+
+        piece = self.field[row][col]
+        if piece is None:
+            return '  '
+        color = piece.get_color()
+        c = 'w' if color == WHITE else 'b'
+        return c + piece.char()
+
+    def move_piece(self, row, col, row1, col1):
+        """Переместить фигуру из точки (row, col) в точку (row1, col1).
+        Если перемещение возможно, метод выполнит его и вернет True.
+        Если нет --- вернет False"""
+
+        if self.is_move_avaliable(row, col, row1, col1):
+            self.field[row][col] = None  # Снять фигуру.
+            self.field[row1][col1] = piece  # Поставить на новое место.
+
+            if isinstance(piece, Pawn) and abs(row - row1) == 2: # если пешка походила на две клетки, то её можно взять на проходе
+                self.is_can_be_taken_on_pass = (int((row + row1) / 2), col, row1, col1) # запоминаем координаты клетки, через которую она прошла,
+                                                                                        # и координаты самой пешки
+            else:
+                self.is_can_be_taken_on_pass = None  # удаляем информацию о пешки, т.к. наступил следующий ход
+
+            piece.set_position(row1, col1)  # обновляем информацию о фигуре
+            self.color = opponent(self.color)  # передаём ход другому игроку
+            return True
+        return False
+
+    def is_move_avaliable(self, row, col, row1, col1):
+        """Проверка возможен ли данный ход"""
+
+        if not correct_coords(row, col) or not correct_coords(row1, col1): 
+            return False  # одна из клеток неверно введена
+
+        if row == row1 and col == col1:
+            return False  # нельзя пойти в ту же клетку
+
+        piece = self.field[row][col]
+
+        if piece is None:
+            return False  # начальная клетка пустая
+
+        if piece.get_color() != self.color:
+            return False  # нельзя ходить не своими фигурами
+        
+        if isinstance(piece, Pawn):  # у пешки возможны чуть более сложные ходы,
+                                     # поэтому её следует рассматривать отдельно
+            flag = piece.can_move(row1, col1, self.is_can_be_taken_on_pass, self.field)
+            # flag = (bool, bool) 
+            # первое - возможен ли ход
+            # второе - было ли это взятием на проходе
+            if not flag[0]:  # ход не возможен по любой из причин
+                return False
+            if flag[1]:
+                # пешка ловит на проходе,
+                # поэтому следует убрать пойманную пешку с доски
+                self.field[self.is_can_be_taken_on_pass[2]][self.is_can_be_taken_on_pass[3]]
+                # иначе пешка просто ходит или ест другую фигуру,
+                # никаких дополнительных действий не нужно
+
+        if not piece.can_move(row1, col1):
+            return False  # выбранная фигура не может походить в выбранную клетку
+
+        # если данный ход ставит своего же короля под удар, вернуть False. Не реализовано
+        # если королю шах, и выбранная фигура не король, вернуть False. Не реализовано
+
+        if isinstance(piece, King) and self.is_under_attack(row, col, opponent(self.current_player_color())):
+            return False  # Нельзя ходить королём на клетки, которые бьются другими фигурами.
+        return True
+
+    def is_under_attack(self, row, col, color):
+        """Проверка, находится ли данная клетка под атакой других фигур данного цвета"""
+
+        for i, j in range((8, 8)):
+            if self.field is not None:
+                piece = self.field[i][j]
+                if color == piece.get_color():
+                    if isinstance(piece, Pawn):  # у пешки немного отличающаяся система хода, проверяем её отдельно от других фигур
+                        if piece.can_move(row, col, self.is_can_be_taken_on_pass, self.field):
+                            return True
+                    if piece.can_move(row, col):
+                        return True
 
 class Pawn(Chessman):
-    pass
+    """Фигура пешка"""
+
+    def char(self):
+        """Функция, возвращающая имя фигуры"""
+        return 'P'
+
+    def can_move(self, row, col, is_can_be_taken_on_pass, field):
+        return True
 
 
 class Rook(Chessman):
-    pass
+    """Фигура ладья"""
+
+    def char(self):
+        """Функция, возвращающая имя фигуры"""
+        return 'R'
+
+    def can_move(self, row, col):
+        return True
 
 
 class Queen(Chessman):
-    pass
+    """Фигура ферзь"""
+
+    def char(self):
+        """Функция, возвращающая имя фигуры"""
+        return 'Q'
+    
+    def can_move(self, row, col):
+        return True
 
 
 class Bishop(Chessman):
-    pass
+    """Фигура слон"""
+
+    def char(self):
+        """Функция, возвращающая имя фигуры"""
+        return 'B'
+    
+    def can_move(self, row, col):
+        return True
 
 
 class Knight(Chessman):
-    pass
+    """Фигура конь"""
+    
+    def char(self):
+        """Функция, возвращающая имя фигуры"""
+        return 'N'
+    
+    def can_move(self, row, col):
+        return True
 
 
 class King(Chessman):
-    pass
+    """Фигура король"""
+
+    def char(self):
+        """Функция, возвращающая имя фигуры"""
+        return 'K'
+    
+    def can_move(self, row, col):
+        return True
 
 
 if __name__ == "__main__":
