@@ -54,7 +54,8 @@ def main():
 
         if command == 'exit':
             break
-
+        if command == 'move ':
+            continue
         move_type, row, col, row1, col1 = command.split()
         row, col, row1, col1 = int(row), int(col), int(row1), int(col1)
 
@@ -102,6 +103,8 @@ class Board:
             self.field.append([None] * 8)
 
         # расставляем все фигуры
+
+        """   
         for j in range(8): # все пешки
             self.field[1][j] = Pawn(1, j, WHITE)
             self.field[6][j] = Pawn(6, j, BLACK)
@@ -114,9 +117,11 @@ class Board:
             self.field[7][1 + 5 * i] = Knight(7, 1 + 5 * i, BLACK)
             self.field[0][2 + 3 * i] = Bishop(0, 2 + 3 * i, WHITE) 
             self.field[7][2 + 3 * i] = Bishop(7, 2 + 3 * i, BLACK)
-        self.field[7][3] = Queen(7, 4, BLACK)
-        self.field[0][3] = Queen(0, 5, WHITE)
-        self.field[7][4] = King(7, 5, BLACK)
+        """
+
+        #self.field[7][3] = Queen(7, 3, BLACK)
+        #self.field[0][3] = Queen(0, 3, WHITE)
+        self.field[2][4] = King(2, 4, BLACK)
         self.field[0][4] = King(0, 4, WHITE)
 
     def current_player_color(self):
@@ -151,13 +156,16 @@ class Board:
         piece = self.field[row][col]
 
         if piece is None:
+            print('|||||| начальная клетка пустая')
             return False  # начальная клетка пустая
 
         if piece.get_color() != self.color:
+            print('|||||| нельзя ходить не своими фигурами')
             return False  # нельзя ходить не своими фигурами
 
         if not isinstance(piece, Pawn):
             if not piece.can_move(row1, col1):
+                print('||||||| выбранная фигура не может походить в выбранную клетку')
                 return False  # выбранная фигура не может походить в выбранную клетку
 
         if isinstance(piece, Pawn):  # у пешки возможны чуть более сложные ходы,
@@ -168,14 +176,16 @@ class Board:
             if flag[1]:
                 # пешка ловит на проходе,
                 # поэтому следует убрать пойманную пешку с доски
-                self.field[self.is_can_be_taken_on_pass[2]][self.is_can_be_taken_on_pass[3]] = None
+                self.remove_chessman(self.is_can_be_taken_on_pass[2], self.is_can_be_taken_on_pass[3])
                 # иначе просто ходит или ест другую фигуру,
                 # никаких дополнительных действий не нужно
 
         if not piece.is_way_clear(row1, col1, self.field):
+            print('||||||| нельзя проходить через другие фигуры')
             return False  # нельзя проходить через другие фигуры (исключение -- конь)
 
-        if isinstance(piece, King) and is_under_attack(row, col, opponent(self.current_player_color())):
+        if isinstance(piece, King) and self.is_under_attack(row, col, opponent(self.current_player_color())):
+            print('||||||| нельзя ходить королём на клетки, которые бьются другими фигурами')
             return False  # нельзя ходить королём на клетки, которые бьются другими фигурами
 
         # если программа дошла до этого момента,
@@ -201,8 +211,13 @@ class Board:
                 if self.field[i][j] is not None: # у каждой фигуры данного цвета (которая ещё находится на поле) 
                                                  # бьёт ли она эту клетку
                     if color == self.field[i][j].get_color():
+                        if isinstance(self.field[i][j], Pawn):  # у пешки немного отличающаяся система хода, проверяем её отдельно от других фигур
+                            if self.field[i][j].can_move(row, col, self.is_can_be_taken_on_pass, self.field):
+                                return True
                         if self.field[i][j].can_move(row, col):
+                            print(self.field[i][j].char(), self.field[i][j].row , self.field[i][j].col)
                             return True
+                        
         return False
 
 
@@ -268,15 +283,6 @@ class Pawn(Chessman):
         return True
 
 
-'''
-1 4 3 4
-6 3 4 3
-3 4 4 3
-6 4 4 4
-4 3 5 4
-'''
-
-
 class Rook(Chessman):
     """Фигура ладья"""
 
@@ -299,11 +305,11 @@ class Rook(Chessman):
         Если их нет или на назначенной клетке стоит фигура другого цвета
         возвращается True"""
         if self.row == row: # движение по горизонтали
-            for i in range(row, self.row, (self.row - row) / abs(self.row - row)): 
+            for i in range(col, self.col, int((self.col - col) / abs(self.col - col))): 
                 # перебираем все клетки от данной
                 # до клетки где сейчас стоит фигура
-                piece = field[i][self.col]
-                if i == row:
+                piece = field[self.row][i]
+                if i == col:
                     if piece is not None:
                         if piece.get_color() == self.get_color():
                             return False
@@ -312,11 +318,11 @@ class Rook(Chessman):
                     return False
 
         elif self.col == col: # движение по вертикали
-            for i in range(col, self.col, (self.col - col) / abs(self.col - col)): 
+            for i in range(row, self.row, int((self.row - row) / abs(self.row - row))): 
                 # перебираем все клетки от данной
                 # до клетки где сейчас стоит фигура
-                piece = field[self.row][i]
-                if i == col: 
+                piece = field[i][self.col]
+                if i == row: 
                     # если на назначенной клетки стоит фигура другого цвета, 
                     # мы её игнорируем, т.е. мы её съедаем,
                     # иначе возвращаем False
@@ -352,19 +358,6 @@ class Queen(Chessman):
         Если их нет или на назначенной клетке стоит фигура другого цвета
         возвращается True"""
         if self.row == row: # движение по горизонтали
-            for i in range(row, self.row, (self.row - row) / abs(self.row - row)): 
-                # перебираем все клетки от данной
-                # до клетки где сейчас стоит фигура
-                piece = field[i][self.col]
-                if i == row:
-                    if piece is not None:
-                        if piece.get_color() == self.get_color():
-                            return False
-                    continue
-                if piece is not None:
-                    return False
-
-        elif self.col == col: # движение по вертикали
             for i in range(col, self.col, int((self.col - col) / abs(self.col - col))): 
                 # перебираем все клетки от данной
                 # до клетки где сейчас стоит фигура
@@ -373,6 +366,19 @@ class Queen(Chessman):
                     # если на назначенной клетки стоит фигура другого цвета, 
                     # мы её игнорируем, т.е. мы её съедаем,
                     # иначе возвращаем False
+                    if piece is not None:
+                        if piece.get_color() == self.get_color():
+                            return False
+                    continue
+                if piece is not None:
+                    return False
+
+        elif self.col == col: # движение по вертикали
+            for i in range(row, self.row, int((self.row - row) / abs(self.row - row))): 
+                # перебираем все клетки от данной
+                # до клетки где сейчас стоит фигура
+                piece = field[i][self.col]
+                if i == row:
                     if piece is not None:
                         if piece.get_color() == self.get_color():
                             return False
@@ -417,8 +423,8 @@ class Bishop(Chessman):
         """Проверка на то, есть ли на пути другие фигуры.
         Если их нет или на назначенной клетке стоит фигура другого цвета
         возвращается True"""
-        d1 = (self.row - row) / abs(self.row - row) # направление движения по горизонтали и по вертикали
-        d2 = (self.col - col) / abs(self.col - col)
+        d1 = int((self.row - row) / abs(self.row - row)) # направление движения по горизонтали и по вертикали
+        d2 = int((self.col - col) / abs(self.col - col))
         for i in range(abs(self.row - row)): 
             # перебираем все клетки от данной
             # до клетки где сейчас стоит фигура
@@ -466,9 +472,11 @@ class King(Chessman):
 
         # Король может ходить либо по диогонали, либо по вертикали
         # либо по горизонтали на одну клетку.
-        if (0 < abs(self.row - row) <=1 and 0 <= abs(self.col - col) <= 1):
-            return True
-        return False
+        if (row, col) == (self.row, self.col):
+            return False
+        if abs(self.row - row) > 1 or abs(self.col - col) > 1:
+            return False
+        return True
     
     def char(self):
         """Функция, возвращающая имя фигуры"""
