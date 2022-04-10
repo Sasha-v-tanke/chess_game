@@ -15,7 +15,7 @@ def opponent(color): # Удобная функция для вычисления
     return WHITE
 
 
-def print_board(board): # Распечатать доску в текстовом виде (см. скриншот)
+def print_board(board): # Распечатать доску в текстовом виде
     print('     +----+----+----+----+----+----+----+----+')
     for row in range(7, -1, -1):
         print(' ', row, end='  ')
@@ -50,7 +50,7 @@ def main():
             print('Ход белых:')
         else:
             print('Ход черных:')
-        command = input()
+        command = 'move ' + input()
 
         if command == 'exit':
             break
@@ -126,6 +126,7 @@ class Board:
         """Возвращает строку из двух символов. Если в клетке (row, col)
         находится фигура, символы цвета и фигуры. Если клетка пуста,
         то два пробела."""
+
         piece = self.field[row][col]
         if piece is None:
             return '  '
@@ -164,10 +165,10 @@ class Board:
             flag = piece.can_move(row1, col1, self.is_can_be_taken_on_pass, self.field)
             if not flag[0]:  # ход не возможен по любой из причин
                 return False
-            elif flag[1]:
+            if flag[1]:
                 # пешка ловит на проходе,
                 # поэтому следует убрать пойманную пешку с доски
-                self.remove_chessman(self.is_can_be_taken_on_pass[2], self.is_can_be_taken_on_pass[3])
+                self.field[self.is_can_be_taken_on_pass[2]][self.is_can_be_taken_on_pass[3]] = None
                 # иначе просто ходит или ест другую фигуру,
                 # никаких дополнительных действий не нужно
 
@@ -220,10 +221,10 @@ class Pawn(Chessman):
             piece = field[row][col]
             if piece is not None:
                 if piece.get_color() != self.get_color():
-                   return True, False  # так ходить можно, дополнительно другие фигуры удалять не нужно
+                    return True, False  # так ходить можно, дополнительно другие фигуры удалять не нужно
             else:
                 if is_can_be_taken_on_pass is not None:
-                    if (row, col) == (is_can_be_taken_on_pass[2], is_can_be_taken_on_pass[3]):
+                    if (row, col) == (is_can_be_taken_on_pass[0], is_can_be_taken_on_pass[1]):
                         return True, True  # пешка может съесть другую на проходе,
                                            # нужно убрать вторую с доски
 
@@ -237,7 +238,7 @@ class Pawn(Chessman):
             start_row = 6
  
         # ход на 1 клетку
-        if self.row + direction == row:
+        if self.row + direction == row and self.col == col:
             return True, False
  
         # ход на 2 клетки из начального положения
@@ -252,15 +253,28 @@ class Pawn(Chessman):
         возвращается True"""
 
         if field[row][col] is not None and self.col - col != 0:
+            print(21)
             return True
-        if field[row][col] is None:
+        if field[row][col] is not None:
+            print(22)
             return False  # пешка не умеет есть по прямой
         if abs(self.row - row) == 1:
-            pass
+            print(24)
+            return True
         else:
+            print(23)
             if field[row + int((self.row - row) / abs(self.row - row))][col] is not None:
                 return False # если пешка сделал длинный ход, то также нужно проверить промежуточную клетку
         return True
+
+
+'''
+1 4 3 4
+6 3 4 3
+3 4 4 3
+6 4 4 4
+4 3 5 4
+'''
 
 
 class Rook(Chessman):
