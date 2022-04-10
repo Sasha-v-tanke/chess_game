@@ -188,22 +188,24 @@ class Board:
         # если данный ход ставит своего же короля под удар, вернуть False. Не реализовано
         # если королю шах, и выбранная фигура не король, вернуть False. Не реализовано
 
-        if isinstance(piece, King) and self.is_under_attack(row, col, opponent(self.current_player_color())):
+        if isinstance(piece, King) and self.is_under_attack(row1, col1, opponent(self.current_player_color())):
             return False  # Нельзя ходить королём на клетки, которые бьются другими фигурами.
         return True
 
     def is_under_attack(self, row, col, color):
         """Проверка, находится ли данная клетка под атакой других фигур данного цвета"""
 
-        for i, j in range((8, 8)):
-            if self.field is not None:
+        for i in range(8):
+            for j in range(8):
                 piece = self.field[i][j]
-                if color == piece.get_color():
-                    if isinstance(piece, Pawn):  # у пешки немного отличающаяся система хода, проверяем её отдельно от других фигур
-                        if piece.can_move(row, col, self.is_can_be_taken_on_pass, self.field):
+                if piece is not None:
+                    if color == piece.get_color():
+                        if isinstance(piece, Pawn):  # у пешки немного отличающаяся система хода, проверяем её отдельно от других фигур
+                            if piece.can_move(row, col, self.is_can_be_taken_on_pass, self.field):
+                                return True
+                        if piece.can_move(row, col, self.field):
                             return True
-                    if piece.can_move(row, col, self.field):
-                        return True
+        return False
 
 
 class Pawn(Chessman):
@@ -256,7 +258,8 @@ class Rook(Chessman):
             if field[row][col].get_color() == self.get_color():
                 return False
         return True
- 
+
+
 class Queen(Chessman):
     """Фигура ферзь"""
 
@@ -372,8 +375,22 @@ class King(Chessman):
         """Функция, возвращающая имя фигуры"""
         return 'K'
     
-    def can_move(self, row, col):
+    def can_move(self, row, col, field):
         """Функция, проверяющая, может ли данная фигура походить на данную клетку"""
+
+        if row == self.row and self.col == col:
+            return False  # нельзя ходить на ту же клетку
+        if abs(self.row - row) + abs(self.col - col) <= 2 and self.is_way_clear(row, col, field):
+            return True
+        return False
+
+    def is_way_clear(self, row, col, field):
+        """Проверка, есть ли другие фигуры на пути.
+        Фигура на назначенной клетки -- исключение, если она другого цвета"""
+
+        if field[row][col] is not None:
+            if field[row][col].get_color() == self.get_color():
+                return False
         return True
 
 
