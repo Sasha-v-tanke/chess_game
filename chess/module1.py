@@ -15,15 +15,19 @@ def opponent(color): # Удобная функция для вычисления
 
 
 def print_board(board): # Распечатать доску в текстовом виде
-    print('     +----+----+----+----+----+----+----+----+')
-    for row in range(7, -1, -1):
-        print(' ', row, end='  ')
-        for col in range(8):
-            print('|', board.cell(row, col), end=' ')
-        print('|')
-        print('     +----+----+----+----+----+----+----+----+')
     print(end='        ')
-    for col in range(8):
+    for col in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']:
+        print(col, end='    ')
+    print()
+    print('     +----+----+----+----+----+----+----+----+     ')
+    for row in range(7, -1, -1):
+        print('  ' + str(row + 1), end='  ')
+        for col in range(8):
+            print('| ' + board.cell(row, col), end=' ')
+        print('| ' + str(row + 1))
+        print('     +----+----+----+----+----+----+----+----+     ')
+    print(end='        ')
+    for col in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']:
         print(col, end='    ')
     print()
  
@@ -40,9 +44,10 @@ def main():
 
         # Подсказка по командам
         print('Команды:')
-        print('    exit                               -- выход')
-        print('    move <row> <col> <row1> <col1>     -- ход из клетки (row, col)')
-        print('                                          в клетку (row1, col1)')
+        print('    exit                        -- выход')
+        print('    <row;col> <row1;col1>       -- ход из клетки (row, col)')
+        print('                                   в клетку (row1, col1);')
+        print('                                   например, e2 e4')
 
         # Выводим приглашение игроку нужного цвета
         if board.current_player_color() == WHITE:
@@ -55,14 +60,18 @@ def main():
             break
         if command == '':
             continue
-        move_type, row, col, row1, col1 = command.split()
-        row, col, row1, col1 = int(row), int(col), int(row1), int(col1)
+        row, col, row1, col1 = translate(command)
 
         if board.move_piece(row, col, row1, col1):
             print('Ход успешен')
-            print('-' * 46)
+            print('-' * 50)
         else:
             print('Координаты некорректы! Попробуйте другой ход!')
+
+
+def translate(coordinats):
+    a, b = coordinats.split()
+    return int(a[1]) - 1, 'abcdefgh'.index(a[0]), int(b[1]) - 1, 'abcdefgh'.index(b[0])
 
 
 class Chessman:
@@ -289,6 +298,9 @@ class Knight(Chessman):
             new_field[row][col] = None
             return True, new_field  # можно ходить только буквой Г
         if abs(row1 - row) == 1 and abs(col - col1) == 2:
+            new_field = field
+            new_field[row1][col1] = new_field[row][col]
+            new_field[row][col] = None
             return True , new_field
         return False, None
 
@@ -330,13 +342,13 @@ class Queen(Chessman):
         
         if row1 == row:
             d = int((col - col1) / abs(col - col1))
-            for i in range(1, abs(col - col1) + 1):
+            for i in range(1, abs(col - col1)):
                 if field[row1][col - i * d] is not None:
                     return False
 
         if col1 == col:
             d = int((row - row1) / abs(row - row1))
-            for i in range(1, abs(row - row1) + 1):
+            for i in range(1, abs(row - row1)):
                 if field[row - i * d][col1] is not None:
                     return False
 
